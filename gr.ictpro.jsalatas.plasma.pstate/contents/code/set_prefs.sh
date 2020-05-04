@@ -7,6 +7,8 @@ CPU_MAX_PERF=$INTEL_PSTATE/max_perf_pct
 CPU_TURBO=$INTEL_PSTATE/no_turbo
 CPU_TOTAL_AVAILABLE=$(nproc --all)
 CPU_ONLINE=$(nproc)
+CPU_MAX_FREQ=$ACPI_CPU/cpu0/cpufreq/cpuinfo_max_freq
+CPU_MIN_FREQ=$ACPI_CPU/cpu0/cpufreq/cpuinfo_min_freq
 
 GPU=/sys/class/drm/card0
 GPU_MIN_FREQ=$GPU/gt_min_freq_mhz
@@ -256,6 +258,9 @@ else
 fi
 cpu_total_available=`echo $CPU_TOTAL_AVAILABLE`
 cpu_online=`echo $CPU_ONLINE`
+cpu_min_freq=`cat $CPU_MIN_FREQ`
+cpu_max_freq=`cat $CPU_MAX_FREQ`
+let cpu_min_limit=$cpu_min_freq*100/$cpu_max_freq
 gpu_min_freq=`cat $GPU_MIN_FREQ`
 gpu_max_freq=`cat $GPU_MAX_FREQ`
 gpu_min_limit=`cat $GPU_MIN_LIMIT`
@@ -325,6 +330,7 @@ fi
 json="{"
 json="${json}\"cpu_min_perf\":\"${cpu_min_perf}\""
 json="${json},\"cpu_max_perf\":\"${cpu_max_perf}\""
+json="${json},\"cpu_min_limit\":\"${cpu_min_limit}\""
 json="${json},\"cpu_turbo\":\"${cpu_turbo}\""
 json="${json},\"cpu_total_available\":\"${cpu_total_available}\""
 json="${json},\"cpu_online\":\"${cpu_online}\""

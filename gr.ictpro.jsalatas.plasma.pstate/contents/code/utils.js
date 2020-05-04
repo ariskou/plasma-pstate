@@ -59,6 +59,7 @@ var sensors = {
     // Informational
     'cpu_cur_load': {'value': undefined, 'unit':'%', 'print': to_int},
     'cpu_cur_freq': {'value': undefined, 'unit':' MHz', 'print': to_int},
+    'cpu_min_limit': {'value': undefined, 'unit':'', 'print': to_int},
     'gpu_cur_freq': {'value': undefined, 'unit':' MHz', 'print': to_int},
     'cpu_total_available': {'value': undefined, 'unit':'', 'print': to_int},
     'gpu_min_limit': {'value': undefined, 'unit':'', 'print': to_int},
@@ -99,7 +100,7 @@ var model =  [
         'sensors': ['cpu_cur_load', 'cpu_cur_freq', 'gpu_cur_freq'],
         'items': [
             {'type': 'group', 'text': 'CPU Frequencies', 'items' :[
-                {'type': 'slider', 'text': 'Min perf', 'min': 0, 'max': 100, 'sensor': 'cpu_min_perf'},
+                {'type': 'slider', 'text': 'Min perf', 'min': 'cpu_min_limit', 'max': 100, 'sensor': 'cpu_min_perf'},
                 {'type': 'slider', 'text': 'Max perf', 'min': 0, 'max': 100, 'sensor': 'cpu_max_perf'},
                 {'type': 'switch', 'text': 'Turbo', 'sensor': 'cpu_turbo'}
             ]},

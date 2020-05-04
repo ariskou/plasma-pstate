@@ -48,7 +48,11 @@ check_dell_thermal () {
     if [ $DELL_EXISTS = true ]; then
         return 1
     else
-        smbios-thermal-ctl -g > /dev/null 2>&1
+        if [ -x "$(command -v smbios-thermal-ctl-c)" ]; then
+            smbios-thermal-ctl-c -g > /dev/null 2>&1
+        else
+            smbios-thermal-ctl -g > /dev/null 2>&1
+        fi
         OUT=$?
         if [ $OUT -eq 0 ]; then
             return 0
@@ -175,7 +179,11 @@ set_energy_perf () {
 }
 
 set_thermal_mode () {
-    smbios-thermal-ctl --set-thermal-mode=$1 2> /dev/null
+    if [ -x "$(command -v smbios-thermal-ctl-c)" ]; then
+        smbios-thermal-ctl-c --set-thermal-mode=$1 2> /dev/null
+    else
+        smbios-thermal-ctl --set-thermal-mode=$1 2> /dev/null
+    fi
 }
 
 set_lg_battery_charge_limit(){
@@ -267,7 +275,11 @@ if [ -z "$energy_perf" ]; then
     awk '{ printf "%s\n", $2; }' | head -n 1`
 fi
 if check_dell_thermal; then
-    thermal_mode=`smbios-thermal-ctl -g | grep -C 1 "Current Thermal Modes:"  | tail -n 1 | awk '{$1=$1;print}' | sed "s/\t//g" | sed "s/ /-/g" | tr "[A-Z]" "[a-z]" `
+    if [ -x "$(command -v smbios-thermal-ctl-c)" ]; then
+        thermal_mode=`smbios-thermal-ctl-c -g | sed "s/ /-/g" | tr "[A-Z]" "[a-z]" `
+    else
+        thermal_mode=`smbios-thermal-ctl -g | grep -C 1 "Current Thermal Modes:"  | tail -n 1 | awk '{$1=$1;print}' | sed "s/\t//g" | sed "s/ /-/g" | tr "[A-Z]" "[a-z]" `
+    fi
 fi
 
 if check_lg_drivers; then

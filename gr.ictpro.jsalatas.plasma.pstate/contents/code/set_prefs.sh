@@ -1,9 +1,12 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-INTEL_PSTATE=/sys/devices/system/cpu/intel_pstate
+ACPI_CPU=/sys/devices/system/cpu
+INTEL_PSTATE=$ACPI_CPU/intel_pstate
 CPU_MIN_PERF=$INTEL_PSTATE/min_perf_pct
 CPU_MAX_PERF=$INTEL_PSTATE/max_perf_pct
 CPU_TURBO=$INTEL_PSTATE/no_turbo
+CPU_TOTAL_AVAILABLE=$(nproc --all)
+CPU_ONLINE=$(nproc)
 
 GPU=/sys/class/drm/card0
 GPU_MIN_FREQ=$GPU/gt_min_freq_mhz
@@ -67,6 +70,32 @@ set_cpu_turbo () {
             printf '0\n' > $CPU_TURBO; 2> /dev/null
         else
             printf '1\n' > $CPU_TURBO; 2> /dev/null
+        fi
+    fi
+}
+
+set_cpu_state () {
+    num=$1
+    num_off=$[$CPU_TOTAL_AVAILABLE-$num]
+    counter=1
+    limit=$[$num-1]
+    all_off=$[$CPU_TOTAL_AVAILABLE-1]
+    if [ -n "$num" ] && [ "$num" != "0" ]; then
+        if [ "$num" -ne "1" ]; then
+            while [ "$counter" -le "$limit" ]; do
+                    printf '1\n' > $ACPI_CPU/cpu$counter/online; 2> /dev/null
+                    counter=$[$counter+1]
+            done
+            limit=$[$limit+$num_off]
+            while [ "$counter" -le "$limit" ]; do
+                    printf '0\n' > $ACPI_CPU/cpu$counter/online; 2> /dev/null
+                    counter=$[$counter+1]
+            done
+        else
+            while [ "$counter" -le "$all_off" ]; do
+                    printf '0\n' > $ACPI_CPU/cpu$counter/online; 2> /dev/null
+                    counter=$[$counter+1]
+            done
         fi
     fi
 }
@@ -170,6 +199,8 @@ if [ "$cpu_turbo" == "1" ]; then
 else
     cpu_turbo="true"
 fi
+cpu_total_available=`echo $CPU_TOTAL_AVAILABLE`
+cpu_online=`echo $CPU_ONLINE`
 gpu_min_freq=`cat $GPU_MIN_FREQ`
 gpu_max_freq=`cat $GPU_MAX_FREQ`
 gpu_min_limit=`cat $GPU_MIN_LIMIT`
@@ -221,6 +252,8 @@ json="{"
 json="${json}\"cpu_min_perf\":\"${cpu_min_perf}\""
 json="${json},\"cpu_max_perf\":\"${cpu_max_perf}\""
 json="${json},\"cpu_turbo\":\"${cpu_turbo}\""
+json="${json},\"cpu_total_available\":\"${cpu_total_available}\""
+json="${json},\"cpu_online\":\"${cpu_online}\""
 json="${json},\"gpu_min_freq\":\"${gpu_min_freq}\""
 json="${json},\"gpu_max_freq\":\"${gpu_max_freq}\""
 json="${json},\"gpu_min_limit\":\"${gpu_min_limit}\""
@@ -255,6 +288,10 @@ case $1 in
 
     "-cpu-turbo")
         set_cpu_turbo $2
+        ;;
+
+   "-cpu-online")
+        set_cpu_state $2
         ;;
 
     "-gpu-min-freq")
@@ -306,6 +343,7 @@ case $1 in
         echo "1: set_prefs.sh [ -cpu-min-perf |"
         echo "                  -cpu-max-perf |"
         echo "                  -cpu-turbo |"
+        echo "                  -cpu-online |"
         echo "                  -gpu-min-freq |"
         echo "                  -gpu-max-freq |"
         echo "                  -gpu-boost-freq |"

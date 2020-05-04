@@ -25,6 +25,9 @@ IDEAPAD_LAPTOP_DRIVER=/sys/bus/platform/drivers/ideapad_acpi/VPC2004:00/
 IDEAPAD_BATTERY_CONSERVATION=$IDEAPAD_LAPTOP_DRIVER/conservation_mode
 IDEAPAD_FN_LOCK=$IDEAPAD_LAPTOP_DRIVER/fn_lock
 
+DELL_EXISTS=false
+NVIDIA_EXISTS=false
+
 check_lg_drivers() {
     if [ -d $LG_LAPTOP_DRIVER ]; then
         return 0
@@ -42,22 +45,32 @@ check_ideapad_drivers() {
 }
 
 check_dell_thermal () {
-    smbios-thermal-ctl -g > /dev/null 2>&1
-    OUT=$?
-    if [ $OUT -eq 0 ]; then
-        return 0
-    else
+    if [ $DELL_EXISTS = true ]; then
         return 1
+    else
+        smbios-thermal-ctl -g > /dev/null 2>&1
+        OUT=$?
+        if [ $OUT -eq 0 ]; then
+            return 0
+        else
+            DELL_EXISTS=true
+            return 1
+        fi
     fi
 }
 
 check_nvidia () {
-    nvidia-settings -q GpuPowerMizerMode > /dev/null 2>&1
-    OUT=$?
-    if [ $OUT -eq 0 ]; then
-        return 0
-    else
+    if [ $NVIDIA_EXISTS = true ]; then
         return 1
+    else
+        nvidia-settings -q GpuPowerMizerMode > /dev/null 2>&1
+        OUT=$?
+        if [ $OUT -eq 0 ]; then
+            return 0
+        else
+            NVIDIA_EXISTS=true
+            return 1
+        fi
     fi
 }
 
